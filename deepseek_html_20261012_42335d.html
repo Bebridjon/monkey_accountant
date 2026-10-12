@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐒 Джунглевый калькулятор зарплаты</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Comic Sans MS', 'Segoe UI', -apple-system, sans-serif;
+    background: #d4f1c4;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(255,255,255,0.5) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(255,255,255,0.4) 0%, transparent 40%),
+      linear-gradient(180deg, #a8e063 0%, #56ab2f 100%);
+    background-attachment: fixed;
+    margin: 0;
+    padding: 20px;
+    color: #2d5016;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Лианы сверху */
+  body::before {
+    content: '🌿🍃🌿🍃🌿🍃🌿🍃🌿🍃🌿🍃🌿🍃🌿🍃🌿';
+    position: fixed;
+    top: -10px;
+    left: 0;
+    right: 0;
+    font-size: 28px;
+    letter-spacing: 8px;
+    text-align: center;
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 1;
+    animation: sway 6s ease-in-out infinite;
+  }
+
+  @keyframes sway {
+    0%, 100% { transform: translateX(-5px) rotate(-1deg); }
+    50% { transform: translateX(5px) rotate(1deg); }
+  }
+
+  .wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+    padding-top: 30px;
+  }
+
+  h1 {
+    font-size: 26px;
+    margin: 0 0 20px;
+    text-align: center;
+    color: #2d5016;
+    text-shadow: 2px 2px 0 rgba(255,255,255,0.6);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .monkey-header {
+    text-align: center;
+    font-size: 44px;
+    margin-bottom: 10px;
+    animation: swing 3s ease-in-out infinite;
+    transform-origin: top center;
+    display: inline-block;
+    width: 100%;
+  }
+
+  @keyframes swing {
+    0%, 100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+  }
+
+  .card {
+    background: #fffff0;
+    border-radius: 20px;
+    padding: 22px;
+    margin-bottom: 18px;
+    box-shadow:
+      0 4px 0 #6b8e23,
+      0 8px 16px rgba(45,80,22,0.25);
+    border: 3px dashed #8fbc5a;
+    position: relative;
+  }
+
+  .card::before {
+    content: '🐒';
+    position: absolute;
+    top: -16px;
+    left: 16px;
+    font-size: 28px;
+    background: #fffff0;
+    padding: 0 6px;
+  }
+
+  .card h2 {
+    font-size: 17px;
+    margin: 8px 0 14px;
+    color: #4a7c1a;
+    font-weight: 700;
+    padding-left: 4px;
+  }
+
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .field { flex: 1; min-width: 140px; margin-bottom: 10px; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: #6b8e23;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #b8d98a;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fbfff5;
+    color: #2d5016;
+    font-weight: 600;
+  }
+
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: #56ab2f;
+    box-shadow: 0 0 0 4px rgba(86,171,47,0.2);
+    background: #fff;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+
+  .metric {
+    background: linear-gradient(135deg, #f0f9e0, #e0f0c8);
+    border-radius: 16px;
+    padding: 16px;
+    border: 2px solid #b8d98a;
+    position: relative;
+    box-shadow: 0 3px 0 rgba(107,142,35,0.3);
+  }
+
+  .metric.green { background: linear-gradient(135deg, #d9f0a8, #b8e070); border-color: #8fbc5a; }
+  .metric.red { background: linear-gradient(135deg, #ffe0d0, #ffc8b0); border-color: #ff8f6b; }
+  .metric.orange { background: linear-gradient(135deg, #ffecb3, #ffd66b); border-color: #f0a500; }
+  .metric.purple { background: linear-gradient(135deg, #e8d5ff, #d0b0ff); border-color: #a577e0; }
+
+  .metric .label {
+    font-size: 12px;
+    color: #4a7c1a;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .metric .value {
+    font-size: 21px;
+    font-weight: 800;
+    color: #2d5016;
+  }
+
+  .metric .sub {
+    font-size: 11px;
+    color: #7a9c4a;
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+
+  .total {
+    background: linear-gradient(135deg, #56ab2f, #a8e063);
+    color: #fff;
+    padding: 26px;
+    border-radius: 20px;
+    text-align: center;
+    margin-top: 10px;
+    border: 4px solid #fff;
+    box-shadow: 0 6px 0 #3d7a1f, 0 10px 20px rgba(45,80,22,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .total::before {
+    content: '🍌';
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-20deg);
+    font-size: 42px;
+    opacity: 0.7;
+  }
+
+  .total::after {
+    content: '🍌';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%) rotate(20deg);
+    font-size: 42px;
+    opacity: 0.7;
+  }
+
+  .total .label {
+    font-size: 14px;
+    opacity: 0.95;
+    font-weight: 700;
+  }
+
+  .total .value {
+    font-size: 34px;
+    font-weight: 900;
+    margin-top: 8px;
+    text-shadow: 2px 2px 0 rgba(45,80,22,0.4);
+  }
+
+  .total .sub {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-top: 6px;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: #4a7c1a;
+    margin-top: 8px;
+    line-height: 1.55;
+    background: #f0f9e0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border-left: 4px solid #8fbc5a;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #c8e6a0;
+    color: #2d5016;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    margin-left: 6px;
+    font-weight: 700;
+  }
+
+  .badge.warn {
+    background: #ffd66b;
+    color: #7a5500;
+  }
+
+  details {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #4a7c1a;
+    background: #f0f9e0;
+    padding: 12px 16px;
+    border-radius: 12px;
+  }
+
+  summary {
+    cursor: pointer;
+    color: #2d5016;
+    font-weight: 700;
+    padding: 4px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 10px;
+    background: #fbfff5;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  th, td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #d9ecc0;
+  }
+
+  th {
+    color: #4a7c1a;
+    font-weight: 700;
+    font-size: 12px;
+    background: #e0f0c8;
+  }
+
+  td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .note {
+    background: #fff7d6;
+    border-left: 4px solid #f0a500;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #7a5500;
+    border-radius: 10px;
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  .monkey-emoji {
+    display: inline-block;
+    animation: wiggle 1.5s ease-in-out infinite;
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+
+  /* Летающие бананы на фоне */
+  .banana {
+    position: fixed;
+    font-size: 22px;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+    animation: float 15s linear infinite;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(-100vh) rotate(360deg); }
+  }
+
+  /* Мобильная адаптация */
+  @media (max-width: 600px) {
+    h1 { font-size: 20px; }
+    .monkey-header { font-size: 34px; }
+    .total .value { font-size: 26px; }
+    .total::before, .total::after { font-size: 28px; }
+    body::before { font-size: 20px; letter-spacing: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Летающие бананы -->
+<div class="banana" style="left: 5%; animation-delay: 0s;">🍌</div>
+<div class="banana" style="left: 25%; animation-delay: 4s;">🍌</div>
+<div class="banana" style="left: 50%; animation-delay: 8s;">🍌</div>
+<div class="banana" style="left: 75%; animation-delay: 2s;">🍌</div>
+<div class="banana" style="left: 92%; animation-delay: 6s;">🍌</div>
+
+<div class="wrap">
+  <div class="monkey-header">🐵🌴🐒🌴🙈</div>
+  <h1>Джунглевый калькулятор зарплаты</h1>
+
+  <!-- НАСТРОЙКИ -->
+  <div class="card">
+    <h2>🌿 Основные настройки</h2>
+    <div class="row">
+      <div class="field">
+        <label>💰 Оклад (₽/мес, на руки)</label>
+        <input type="number" id="oklad" value="60000" step="5000">
+      </div>
+      <div class="field">
+        <label>🍌 Премия (₽/мес, на руки)</label>
+        <input type="number" id="premia" value="120000" step="10000">
+      </div>
+      <div class="field">
+        <label>📅 Год</label>
+        <input type="number" id="year" value="2025">
+      </div>
+      <div class="field">
+        <label>🌴 Месяц</label>
+        <select id="month">
+          <option value="1">Январь</option>
+          <option value="2">Февраль</option>
+          <option value="3">Март</option>
+          <option value="4">Апрель</option>
+          <option value="5">Май</option>
+          <option value="6">Июнь</option>
+          <option value="7">Июль</option>
+          <option value="8">Август</option>
+          <option value="9">Сентябрь</option>
+          <option value="10">Октябрь</option>
+          <option value="11">Ноябрь</option>
+          <option value="12">Декабрь</option>
+        </select>
+      </div>
+    </div>
+    <div class="hint">
+      🐒 Суммы оклада и премии — <b>на руки</b> (после НДФЛ).<br>
+      🌿 <b>Премия не входит</b> в средний заработок для больничного и отпускных.<br>
+      🍃 Коэффициент стажа для больничного: <b>60%</b> (стаж менее 5 лет).
+    </div>
+  </div>
+
+  <!-- 1. ВЫПЛАТЫ -->
+  <div class="card">
+    <h2>💵 Выплаты по датам <span class="badge">на руки</span></h2>
+    <div id="workdaysInfo" class="hint" style="margin-bottom:12px;"></div>
+    <div class="metrics" id="payMetrics"></div>
+    <table id="breakdownTable"></table>
+    <div class="note" id="ndflNote"></div>
+  </div>
+
+  <!-- 2. БОЛЬНИЧНЫЙ -->
+  <div class="card">
+    <h2>🤒 Больничный <span class="badge warn">только от оклада, 60%</span></h2>
+    <div class="row">
+      <div class="field">
+        <label>🌡️ Дней больничного</label>
+        <input type="number" id="sickDays" value="0" min="0">
+      </div>
+    </div>
+    <div id="sickResult"></div>
+  </div>
+
+  <!-- 3. ОТПУСК -->
+  <div class="card">
+    <h2>🏖️ Отпуск <span class="badge warn">только от оклада</span></h2>
+    <div class="row">
+      <div class="field">
+        <label>🌴 Дней отпуска</label>
+        <input type="number" id="vacDays" value="0" min="0">
+      </div>
+    </div>
+    <div id="vacResult"></div>
+  </div>
+
+  <!-- 4. DAY-OFF -->
+  <div class="card">
+    <h2>🍃 Day-off <span class="badge warn">неоплачиваемый</span></h2>
+    <div class="row">
+      <div class="field">
+        <label>🙊 Количество day-off</label>
+        <input type="number" id="dayoffCount" value="0" min="0">
+      </div>
+    </div>
+    <div id="dayoffResult"></div>
+  </div>
+
+  <!-- ИТОГО -->
+  <div class="total">
+    <div class="label">🐒 Итого за месяц (оклад + премия − day-off)</div>
+    <div class="value" id="totalValue">—</div>
+    <div class="sub" id="totalSub"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <details>
+      <summary>🐵 Как считается (открой, если интересно)</summary>
+      <p><b>💰 Стоимость рабочего дня (оклад)</b> = Оклад / раб. дней в месяце</p>
+      <p><b>🍌 Стоимость рабочего дня (премия)</b> = Премия / раб. дней в месяце</p>
+      <p><b>📅 20-го числа</b> = Оклад / раб. дни × отработанных дней в периоде 1–15</p>
+      <p><b>📅 5-го числа</b> = Оклад / раб. дни × отработанных в 16–30/31 <b>+</b> Премия / раб. дни × отработанных за весь месяц</p>
+      <p><b>🤒 Больничный</b> = (оклад_грязными × 24 / 730) × дней × 0.6 × 0.87</p>
+      <p><b>🏖️ Отпускные</b> = (оклад_грязными / 29.3) × дней × 0.87</p>
+      <p><b>🍃 Day-off</b> = −(Оклад/раб.дни + Премия/раб.дни) × количество</p>
+      <p style="color:#7a9c4a;">🌿 Календарь: только выходные (сб, вс) и фиксированные праздники РФ. Переносы не учтены.</p>
+    </details>
+  </div>
+
+  <div style="text-align:center; margin-top:20px; font-size:24px; opacity:0.6;">
+    🌴🐒🍌🌿🙈🌿🍌🐒🌴
+  </div>
+</div>
+
+<script>
+// ---------- КАЛЕНДАРЬ (упрощённый) ----------
+const HOLIDAYS = new Set([
+  "1-1","1-2","1-3","1-4","1-5","1-6","1-7","1-8",
+  "2-23","3-8","5-1","5-9","6-12","11-4"
+]);
+
+function isWorkday(y, m, d) {
+  const dt = new Date(y, m - 1, d);
+  const wd = dt.getDay();
+  if (wd === 0 || wd === 6) return false;
+  if (HOLIDAYS.has(m + "-" + d)) return false;
+  return true;
+}
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+function workdaysInMonth(y, m) {
+  const total = daysInMonth(y, m);
+  let c = 0;
+  for (let d = 1; d <= total; d++) if (isWorkday(y, m, d)) c++;
+  return c;
+}
+function workdaysInRange(y, m, startDay, endDay) {
+  const total = daysInMonth(y, m);
+  const s = Math.min(startDay, total);
+  const e = Math.min(endDay, total);
+  let c = 0;
+  for (let d = s; d <= e; d++) if (isWorkday(y, m, d)) c++;
+  return c;
+}
+
+// ---------- ФОРМАТ ----------
+const nf0 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function fmt(n) { return nf0.format(Math.round(n)) + " ₽"; }
+function fmt2(n) { return nf2.format(n) + " ₽"; }
+
+// ---------- ЧТЕНИЕ ----------
+function val(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function intVal(id) { return parseInt(document.getElementById(id).value) || 0; }
+
+const NDFL_RATE = 0.13;
+const SICK_K = 0.6;
+const AVG_DAYS = 29.3;
+
+// ---------- РАСЧЁТ ----------
+function calculate() {
+  const okladNet = val("oklad");
+  const premiaNet = val("premia");
+  const year = intVal("year");
+  const month = intVal("month");
+
+  const okladGross = okladNet / (1 - NDFL_RATE);
+  const premiaGross = premiaNet / (1 - NDFL_RATE);
+
+  const totalWd = workdaysInMonth(year, month);
+  const okladPerDay = totalWd > 0 ? okladNet / totalWd : 0;
+  const premiaPerDay = totalWd > 0 ? premiaNet / totalWd : 0;
+  const fullDayRate = okladPerDay + premiaPerDay;
+
+  document.getElementById("workdaysInfo").innerHTML =
+    `🌴 Рабочих дней в месяце: <b>${totalWd}</b> &nbsp;|&nbsp; ` +
+    `💰 Оклад/день: <b>${fmt2(okladPerDay)}</b> &nbsp;|&nbsp; ` +
+    `🍌 Премия/день: <b>${fmt2(premiaPerDay)}</b> &nbsp;|&nbsp; ` +
+    `🐒 Итого/день: <b>${fmt2(fullDayRate)}</b>`;
+
+  // --- 1. Выплаты ---
+  const wdFirstHalf = workdaysInRange(year, month, 1, 15);
+  const wdSecondHalf = workdaysInRange(year, month, 16, 31);
+
+  const pay20 = okladPerDay * wdFirstHalf;
+  const pay5_oklad = okladPerDay * wdSecondHalf;
+  const pay5_premia = premiaPerDay * totalWd;
+  const pay5 = pay5_oklad + pay5_premia;
+  const totalMonth = pay20 + pay5;
+
+  document.getElementById("payMetrics").innerHTML = `
+    <div class="metric">
+      <div class="label">📅 20-го числа</div>
+      <div class="value">${fmt(pay20)}</div>
+      <div class="sub">Оклад за 1–15: ${wdFirstHalf} дн × ${fmt2(okladPerDay)}</div>
+    </div>
+    <div class="metric purple">
+      <div class="label">📅 5-го числа</div>
+      <div class="value">${fmt(pay5)}</div>
+      <div class="sub">Оклад за 16–31 + Премия</div>
+    </div>
+    <div class="metric orange">
+      <div class="label">💰 Всего за месяц</div>
+      <div class="value">${fmt(totalMonth)}</div>
+      <div class="sub">на руки</div>
+    </div>
+  `;
+
+  document.getElementById("breakdownTable").innerHTML = `
+    <tr>
+      <th>Компонент</th>
+      <th>Дней</th>
+      <th>Ставка/день</th>
+      <th style="text-align:right">На руки</th>
+      <th style="text-align:right">Грязными</th>
+    </tr>
+    <tr>
+      <td>💰 Оклад за 1–15 (20-го)</td>
+      <td>${wdFirstHalf}</td>
+      <td>${fmt2(okladPerDay)}</td>
+      <td class="num">${fmt(pay20)}</td>
+      <td class="num" style="color:#9ca3af">${fmt(pay20 / (1 - NDFL_RATE))}</td>
+    </tr>
+    <tr>
+      <td>💰 Оклад за 16–31 (5-го)</td>
+      <td>${wdSecondHalf}</td>
+      <td>${fmt2(okladPerDay)}</td>
+      <td class="num">${fmt(pay5_oklad)}</td>
+      <td class="num" style="color:#9ca3af">${fmt(pay5_oklad / (1 - NDFL_RATE))}</td>
+    </tr>
+    <tr>
+      <td>🍌 Премия (5-го)</td>
+      <td>${totalWd}</td>
+      <td>${fmt2(premiaPerDay)}</td>
+      <td class="num">${fmt(pay5_premia)}</td>
+      <td class="num" style="color:#9ca3af">${fmt(pay5_premia / (1 - NDFL_RATE))}</td>
+    </tr>
+    <tr style="font-weight:700; background:#f0f9e0;">
+      <td colspan="3">🐒 Итого</td>
+      <td class="num">${fmt(totalMonth)}</td>
+      <td class="num" style="color:#9ca3af">${fmt(totalMonth / (1 - NDFL_RATE))}</td>
+    </tr>
+  `;
+
+  document.getElementById("ndflNote").innerHTML =
+    `💡 <b>Справка по НДФЛ:</b> при сумме ${fmt(totalMonth)} на руки, ` +
+    `«грязная» зарплата ≈ ${fmt(totalMonth / (1 - NDFL_RATE))}, ` +
+    `из них НДФЛ 13% ≈ <b>${fmt(totalMonth / (1 - NDFL_RATE) - totalMonth)}</b>.`;
+
+  // --- 2. Больничный ---
+  const sickDays = intVal("sickDays");
+  const sickEl = document.getElementById("sickResult");
+  if (sickDays > 0) {
+    const sdzSick = (okladGross * 24) / 730;
+    const sickPayGross = sdzSick * sickDays * SICK_K;
+    const sickPayNet = sickPayGross * (1 - NDFL_RATE);
+
+    const usualForDays = sickDays * fullDayRate;
+    const loss = usualForDays - sickPayNet;
+
+    sickEl.innerHTML = `
+      <div class="metrics">
+        <div class="metric red">
+          <div class="label">🤒 Выплата по больничному</div>
+          <div class="value">${fmt(sickPayNet)}</div>
+          <div class="sub">СДЗ ${fmt2(sdzSick)} × ${sickDays} дн × 0.6 · минус НДФЛ</div>
+        </div>
+        <div class="metric">
+          <div class="label">💼 Если бы работал эти дни</div>
+          <div class="value">${fmt(usualForDays)}</div>
+          <div class="sub">${sickDays} дн × ${fmt2(fullDayRate)} (оклад+премия)</div>
+        </div>
+        <div class="metric red">
+          <div class="label">😢 Потеря</div>
+          <div class="value">−${fmt(loss)}</div>
+          <div class="sub">разница</div>
+        </div>
+      </div>
+      <div class="hint">
+        🌿 СДЗ считается только от оклада: ${fmt(okladGross)} × 24 / 730 = ${fmt2(sdzSick)}.<br>
+        🍃 Премия в базу не входит — поэтому выплата такая низкая при стаже 60%.
+      </div>
+    `;
+  } else {
+    sickEl.innerHTML = `<div class="hint">🌡️ Укажи количество дней больничного.</div>`;
+  }
+
+  // --- 3. Отпуск ---
+  const vacDays = intVal("vacDays");
+  const vacEl = document.getElementById("vacResult");
+  if (vacDays > 0) {
+    const sdzVac = (okladGross * 12) / (12 * AVG_DAYS);
+    const vacPayGross = sdzVac * vacDays;
+    const vacPayNet = vacPayGross * (1 - NDFL_RATE);
+
+    vacEl.innerHTML = `
+      <div class="metrics">
+        <div class="metric green">
+          <div class="label">🏖️ Отпускные</div>
+          <div class="value">${fmt(vacPayNet)}</div>
+          <div class="sub">СДЗ ${fmt2(sdzVac)} × ${vacDays} дн · минус НДФЛ</div>
+        </div>
+        <div class="metric">
+          <div class="label">📊 Средний дневной заработок</div>
+          <div class="value">${fmt2(sdzVac)}</div>
+          <div class="sub">оклад_грязными / 29.3</div>
+        </div>
+        <div class="metric">
+          <div class="label">💼 Для сравнения: рабочий день</div>
+          <div class="value">${fmt2(fullDayRate)}</div>
+          <div class="sub">(оклад + премия) / раб. дни</div>
+        </div>
+      </div>
+      <div class="hint">
+        🌴 СДЗ считается только от оклада: ${fmt(okladGross)} / 29.3 = ${fmt2(sdzVac)}.<br>
+        🍃 Премия в базу не входит — отпускные будут заметно ниже обычного дня.
+      </div>
+    `;
+  } else {
+    vacEl.innerHTML = `<div class="hint">🌴 Укажи количество дней отпуска.</div>`;
+  }
+
+  // --- 4. Day-off ---
+  const dayoffCount = intVal("dayoffCount");
+  const dayoffEl = document.getElementById("dayoffResult");
+  let dayoffDeduction = 0;
+  if (dayoffCount > 0) {
+    dayoffDeduction = dayoffCount * fullDayRate;
+    const lostOklad = dayoffCount * okladPerDay;
+    const lostPremia = dayoffCount * premiaPerDay;
+    dayoffEl.innerHTML = `
+      <div class="metrics">
+        <div class="metric red">
+          <div class="label">📉 Вычет из зарплаты</div>
+          <div class="value">−${fmt(dayoffDeduction)}</div>
+          <div class="sub">${dayoffCount} дн × ${fmt2(fullDayRate)} (на руки)</div>
+        </div>
+        <div class="metric">
+          <div class="label">💰 Из них оклад</div>
+          <div class="value">−${fmt(lostOklad)}</div>
+          <div class="sub">${dayoffCount} дн × ${fmt2(okladPerDay)}</div>
+        </div>
+        <div class="metric">
+          <div class="label">🍌 Из них премия</div>
+          <div class="value">−${fmt(lostPremia)}</div>
+          <div class="sub">${dayoffCount} дн × ${fmt2(premiaPerDay)}</div>
+        </div>
+      </div>
+    `;
+  } else {
+    dayoffEl.innerHTML = `<div class="hint">🙊 Укажи количество day-off.</div>`;
+  }
+
+  // --- ИТОГО ---
+  const totalNet = totalMonth - dayoffDeduction;
+  const totalGross = totalNet / (1 - NDFL_RATE);
+  document.getElementById("totalValue").textContent = fmt(totalNet);
+  document.getElementById("totalSub").textContent =
+    `на руки · грязными ≈ ${fmt(totalGross)} · НДФЛ 13% ≈ ${fmt(totalGross - totalNet)}`;
+}
+
+// ---------- ПОДПИСКА ----------
+document.querySelectorAll("input, select").forEach(el => {
+  el.addEventListener("input", calculate);
+  el.addEventListener("change", calculate);
+});
+
+// ---------- INIT ----------
+(function init() {
+  const now = new Date();
+  document.getElementById("year").value = now.getFullYear();
+  document.getElementById("month").value = now.getMonth() + 1;
+  calculate();
+})();
+</script>
+</body>
+</html>
